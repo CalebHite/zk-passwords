@@ -19,7 +19,8 @@
     "react-dom": "^18.2.0",
     "snarkjs": "^0.7.5",
     "stream-browserify": "^3.0.0",
-    "util": "^0.12.5"
+    "util": "^0.12.5",
+    "xrpl": "^4.4.2"
   },
   "devDependencies": {
     "@babel/core": "^7.20.12",

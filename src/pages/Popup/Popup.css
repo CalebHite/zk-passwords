@@ -6,8 +6,11 @@
   right: 0px;
   text-align: center;
   height: 100%;
-  padding: 10px;
+  width: 100%;
+  padding: 0;
+  margin: 0;
   background-color: #282c34;
+  overflow: hidden;
 }
 
 .App-logo {
@@ -23,12 +26,16 @@
 
 .App-header {
   height: 100%;
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   font-size: calc(10px + 2vmin);
   color: white;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
 }
 
 .App-link {
@@ -46,10 +53,13 @@
 }
 
 .password-hash-container {
-  margin-top: 20px;
   width: 100%;
+  height: 100%;
+  padding: 15px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
   max-width: 400px;
-  padding: 20px;
 }
 
 .password-hash-container h2 {
@@ -118,4 +128,329 @@
   color: #61dafb;
   max-height: 150px;
   overflow-y: auto;
+}
+
+/* Messages */
+.message {
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  font-size: 13px;
+  text-align: left;
+}
+
+.message.error {
+  background-color: rgba(244, 67, 54, 0.2);
+  border: 1px solid #f44336;
+  color: #ff6b6b;
+}
+
+.message.success {
+  background-color: rgba(76, 175, 80, 0.2);
+  border: 1px solid #4caf50;
+  color: #81c784;
+}
+
+/* Buttons */
+.btn {
+  width: 100%;
+  padding: 10px;
+  font-size: 14px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 10px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: #61dafb;
+  color: #282c34;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #4fa8c5;
+}
+
+.btn-secondary {
+  background-color: #444;
+  color: white;
+  border: 1px solid #61dafb;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #555;
+}
+
+.btn-logout {
+  background-color: #d32f2f;
+  color: white;
+  font-size: 12px;
+  padding: 8px;
+}
+
+.btn-logout:hover:not(:disabled) {
+  background-color: #b71c1c;
+}
+
+.btn-refresh {
+  background-color: #555;
+  color: white;
+  font-size: 12px;
+  padding: 8px;
+  margin-bottom: 15px;
+}
+
+.btn-refresh:hover:not(:disabled) {
+  background-color: #666;
+}
+
+.btn-copy {
+  margin-left: 8px;
+  padding: 4px 8px;
+  font-size: 11px;
+  background-color: #444;
+  color: #61dafb;
+  border: 1px solid #61dafb;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.btn-copy:hover {
+  background-color: #555;
+}
+
+.btn-copy-small {
+  padding: 3px 6px;
+  font-size: 10px;
+  background-color: #444;
+  color: #61dafb;
+  border: 1px solid #61dafb;
+  border-radius: 3px;
+  cursor: pointer;
+  margin-left: 8px;
+}
+
+.btn-copy-small:hover {
+  background-color: #555;
+}
+
+/* Section Description */
+.section-description {
+  font-size: 12px;
+  color: #aaa;
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+/* Account Details */
+.account-details {
+  margin-top: 15px;
+  text-align: left;
+}
+
+.detail-item {
+  margin-bottom: 15px;
+}
+
+.detail-item label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 12px;
+  color: #61dafb;
+  font-weight: 500;
+}
+
+.detail-value {
+  background-color: #1e1e1e;
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #444;
+  word-break: break-all;
+  font-size: 11px;
+  font-family: 'Courier New', monospace;
+  color: #61dafb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.warning-text {
+  margin-top: 8px;
+  font-size: 11px;
+  color: #ff9800;
+  font-style: italic;
+}
+
+/* Account Info */
+.account-info {
+  background-color: rgba(97, 218, 251, 0.1);
+  padding: 15px;
+  border-radius: 4px;
+  border: 1px solid #61dafb;
+}
+
+.account-address {
+  margin-bottom: 15px;
+}
+
+.account-address label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 12px;
+  color: #61dafb;
+  font-weight: 500;
+}
+
+.address-value {
+  background-color: #1e1e1e;
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #444;
+  font-size: 12px;
+  font-family: 'Courier New', monospace;
+  color: #61dafb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Passwords List */
+.passwords-list {
+  margin-top: 15px;
+  overflow-y: visible;
+  overflow-x: hidden;
+}
+
+.password-item {
+  background-color: #1e1e1e;
+  padding: 12px;
+  border-radius: 4px;
+  border: 1px solid #444;
+  margin-bottom: 10px;
+  text-align: left;
+}
+
+.password-item-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.password-number {
+  background-color: #61dafb;
+  color: #282c34;
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: bold;
+  min-width: 30px;
+  text-align: center;
+}
+
+.password-decoded {
+  flex: 1;
+}
+
+.password-decoded label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 11px;
+  color: #aaa;
+}
+
+.password-value {
+  background-color: #282c34;
+  padding: 8px;
+  border-radius: 3px;
+  border: 1px solid #444;
+  font-size: 12px;
+  font-family: 'Courier New', monospace;
+  color: #61dafb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.password-hash-info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hash-badge {
+  background-color: #ff9800;
+  color: #282c34;
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+.hash-note {
+  font-size: 11px;
+  color: #888;
+  font-style: italic;
+}
+
+.password-item-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #333;
+}
+
+.nft-id {
+  font-size: 10px;
+  color: #888;
+  font-family: 'Courier New', monospace;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 30px;
+  color: #888;
+  font-size: 13px;
+  font-style: italic;
+}
+
+.loading-text {
+  text-align: center;
+  padding: 20px;
+  color: #61dafb;
+  font-size: 13px;
+}
+
+/* Scrollbar styling */
+.password-hash-container::-webkit-scrollbar,
+.hash-value::-webkit-scrollbar {
+  width: 6px;
+}
+
+.password-hash-container::-webkit-scrollbar-track,
+.hash-value::-webkit-scrollbar-track {
+  background: #1e1e1e;
+  border-radius: 3px;
+}
+
+.password-hash-container::-webkit-scrollbar-thumb,
+.hash-value::-webkit-scrollbar-thumb {
+  background: #61dafb;
+  border-radius: 3px;
+}
+
+.password-hash-container::-webkit-scrollbar-thumb:hover,
+.hash-value::-webkit-scrollbar-thumb:hover {
+  background: #4fa8c5;
 }
