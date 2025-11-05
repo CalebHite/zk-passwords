@@ -1,47 +1,25 @@
-import { poseidon } from 'circomlib';
-import * as snarkjs from 'snarkjs';
-
 /**
- * Encodes a string into a zk-friendly hash using Poseidon hash
+ * Encodes a string into a hash using Web Crypto API (SHA-256)
+ * This is a pure JavaScript solution that doesn't require WebAssembly
  * @param {string} input - The string to encode
- * @returns {string} - The hash as a hexadecimal string
+ * @returns {Promise<string>} - Promise that resolves to the hash as a hexadecimal string
  */
-export function encodeString(input) {
+export async function encodeString(input) {
     if (!input || typeof input !== 'string') {
         throw new Error('Input must be a non-empty string');
     }
 
-    // Convert string to array of bytes (UTF-8 encoding)
+    // Convert string to array buffer (UTF-8 encoding)
     const utf8Bytes = new TextEncoder().encode(input);
 
-    // Convert bytes to BigInt array (Poseidon works with field elements)
-    // We'll chunk the bytes into 31-byte chunks to fit in field elements
-    const fieldElements = [];
-    const chunkSize = 31; // Field elements are typically 254 bits, so 31 bytes is safe
+    // Hash using Web Crypto API (SHA-256)
+    const hashBuffer = await crypto.subtle.digest('SHA-256', utf8Bytes);
 
-    for (let i = 0; i < utf8Bytes.length; i += chunkSize) {
-        const chunk = utf8Bytes.slice(i, i + chunkSize);
-        let value = BigInt(0);
+    // Convert ArrayBuffer to hex string
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
 
-        // Convert chunk to BigInt
-        for (let j = 0; j < chunk.length; j++) {
-            value = value * BigInt(256) + BigInt(chunk[j]);
-        }
-
-        fieldElements.push(value);
-    }
-
-    // If no elements, add a zero element
-    if (fieldElements.length === 0) {
-        fieldElements.push(BigInt(0));
-    }
-
-    // Hash the field elements using Poseidon
-    // Poseidon can hash multiple inputs, so we pass the array
-    const hash = poseidon(fieldElements);
-
-    // Convert BigInt hash to hex string
-    return '0x' + hash.toString(16);
+    return '0x' + hashHex;
 }
 
 /**
@@ -53,9 +31,9 @@ export function encodeString(input) {
  * 
  * @param {string} hash - The hash to verify against
  * @param {string} candidate - The candidate string to check
- * @returns {boolean} - True if the candidate string matches the hash
+ * @returns {Promise<boolean>} - Promise that resolves to true if the candidate string matches the hash
  */
-export function decodeString(hash, candidate) {
+export async function decodeString(hash, candidate) {
     if (!hash || typeof hash !== 'string') {
         throw new Error('Hash must be a non-empty string');
     }
@@ -65,7 +43,7 @@ export function decodeString(hash, candidate) {
     }
 
     // Encode the candidate string
-    const candidateHash = encodeString(candidate);
+    const candidateHash = await encodeString(candidate);
 
     // Compare hashes (normalize to lowercase for comparison)
     return candidateHash.toLowerCase() === hash.toLowerCase();
@@ -127,28 +105,11 @@ export function decodeStringReversible(encoded) {
 /**
  * Helper function to get hash as BigInt for use in zk circuits
  * @param {string} input - The string to hash
- * @returns {bigint} - The hash as BigInt
+ * @returns {Promise<bigint>} - Promise that resolves to the hash as BigInt
  */
-export function encodeStringToBigInt(input) {
-    const utf8Bytes = new TextEncoder().encode(input);
-    const fieldElements = [];
-    const chunkSize = 31;
-
-    for (let i = 0; i < utf8Bytes.length; i += chunkSize) {
-        const chunk = utf8Bytes.slice(i, i + chunkSize);
-        let value = BigInt(0);
-
-        for (let j = 0; j < chunk.length; j++) {
-            value = value * BigInt(256) + BigInt(chunk[j]);
-        }
-
-        fieldElements.push(value);
-    }
-
-    if (fieldElements.length === 0) {
-        fieldElements.push(BigInt(0));
-    }
-
-    return poseidon(fieldElements);
+export async function encodeStringToBigInt(input) {
+    const hashHex = await encodeString(input);
+    // Remove '0x' prefix and convert to BigInt
+    return BigInt(hashHex);
 }
 
