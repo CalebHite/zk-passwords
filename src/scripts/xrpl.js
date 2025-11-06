@@ -1,4 +1,4 @@
-import { encodeString, encodeStringReversible, decodeStringReversible, decodeString } from './passwords.js';
+import { encodeString, encodeStringReversible, decodeStringReversible, decodeString, encryptPassword, decryptPassword } from './passwords.js';
 
 // Session storage key
 const SESSION_STORAGE_KEY = 'xrpl_session';
@@ -81,7 +81,7 @@ export async function isLoggedIn() {
  * console.log('Address:', account.address);
  * console.log('Seed:', account.seed); // Save this securely!
  */
-export async function createXRPLAccount(serverUrl = 'wss://s.altnet.rippletest.net:51233') {
+export async function createXRPLAccount(serverUrl = 'wss://s.devnet.rippletest.net:51233') {
     // Dynamic import of xrpl library
     let xrpl;
     try {
@@ -100,8 +100,8 @@ export async function createXRPLAccount(serverUrl = 'wss://s.altnet.rippletest.n
         const client = new xrpl.Client(serverUrl);
         await client.connect();
 
-        // On testnet, fund the account automatically
-        if (serverUrl.includes('testnet') || serverUrl.includes('altnet')) {
+        // On testnet/devnet, fund the account automatically
+        if (serverUrl.includes('testnet') || serverUrl.includes('altnet') || serverUrl.includes('devnet')) {
             try {
                 await client.fundWallet(wallet);
             } catch (fundError) {
@@ -134,7 +134,7 @@ export async function createXRPLAccount(serverUrl = 'wss://s.altnet.rippletest.n
  * const session = await loginXRPLAccount('sYourSecretSeedHere');
  * console.log('Logged in as:', session.address);
  */
-export async function loginXRPLAccount(seed, serverUrl = 'wss://s.altnet.rippletest.net:51233') {
+export async function loginXRPLAccount(seed, serverUrl = 'wss://s.devnet.rippletest.net:51233') {
     if (!seed || typeof seed !== 'string') {
         throw new Error('Seed must be a non-empty string');
     }
@@ -192,11 +192,12 @@ export async function loginXRPLAccount(seed, serverUrl = 'wss://s.altnet.ripplet
 }
 
 /**
- * Mints an NFT on XRPL with the hashed password stored in the URI field
+ * Mints an NFT on XRPL with the encrypted password stored in the URI field
  * Uses the currently logged-in account. Throws error if not logged in.
- * The password is hashed using SHA-256 and converted to hexadecimal format
+ * The password is encrypted using AES-GCM encryption with the wallet seed as the key
+ * This ensures the password looks like a hash on the block explorer but can be decrypted
  * 
- * @param {string} password - The password to hash and store in the NFT URI
+ * @param {string} password - The password to encrypt and store in the NFT URI
  * @param {string} serverUrl - The XRPL server URL (default: testnet)
  * @param {number} taxon - Optional taxon for grouping NFTs (default: 0)
  * @param {number} flags - NFT flags (default: 8 for transferable)
@@ -208,7 +209,7 @@ export async function loginXRPLAccount(seed, serverUrl = 'wss://s.altnet.ripplet
  */
 export async function mintPasswordNFT(
     password,
-    serverUrl = 'wss://s.altnet.rippletest.net:51233',
+    serverUrl = 'wss://s.devnet.rippletest.net:51233',
     taxon = 0,
     flags = 8
 ) {
@@ -233,14 +234,15 @@ export async function mintPasswordNFT(
     }
 
     try {
-        // Step 1: Encode the password using reversible encoding (not hash, so it can be decoded)
-        const encodedPassword = encodeStringReversible(password);
+        // Step 1: Encrypt the password using AES-GCM encryption with the wallet seed as key
+        // This ensures the password looks like a hash on the block explorer but can be decrypted
+        const encryptedPassword = await encryptPassword(password, session.seed);
 
-        // Step 2: Convert the encoded password to hexadecimal format for XRPL URI
+        // Step 2: Convert the encrypted password to hexadecimal format for XRPL URI
         // Remove '0x' prefix if present - XRPL expects hex without prefix
-        const uriHex = encodedPassword.startsWith('0x')
-            ? encodedPassword.slice(2).toUpperCase()
-            : encodedPassword.toUpperCase();
+        const uriHex = encryptedPassword.startsWith('0x')
+            ? encryptedPassword.slice(2).toUpperCase()
+            : encryptedPassword.toUpperCase();
 
         // Step 4: Connect to XRPL server
         const client = new xrpl.Client(serverUrl);
@@ -295,7 +297,7 @@ export async function mintPasswordNFT(
  */
 export async function mintPasswordNFTFromHex(
     passwordHex,
-    serverUrl = 'wss://s.altnet.rippletest.net:51233',
+    serverUrl = 'wss://s.devnet.rippletest.net:51233',
     taxon = 0,
     flags = 8
 ) {
@@ -372,7 +374,7 @@ export async function mintPasswordNFTFromHex(
  * const nfts = await getAllNFTs();
  * console.log('Total NFTs:', nfts.length);
  */
-export async function getAllNFTs(address = null, serverUrl = 'wss://s.altnet.rippletest.net:51233') {
+export async function getAllNFTs(address = null, serverUrl = 'wss://s.devnet.rippletest.net:51233') {
     // Dynamic import of xrpl library
     let xrpl;
     try {
@@ -439,8 +441,8 @@ function convertXRPLUriToHex(uri) {
 }
 
 /**
- * Retrieves all NFTs for the logged-in account and decodes their URIs
- * Attempts to decode using both reversible and hash verification methods
+ * Retrieves all NFTs for the logged-in account and decrypts their URIs
+ * Decrypts encrypted passwords using the wallet seed as the decryption key
  * 
  * @param {string} serverUrl - The XRPL server URL (default: testnet)
  * @returns {Promise<Array>} - Array of decoded NFT objects with password attempts
@@ -453,8 +455,14 @@ function convertXRPLUriToHex(uri) {
  *   console.log('Is valid hash:', nft.isValidHash);
  * });
  */
-export async function getAllNFTsAndDecode(serverUrl = 'wss://s.altnet.rippletest.net:51233') {
+export async function getAllNFTsAndDecode(serverUrl = 'wss://s.devnet.rippletest.net:51233') {
     try {
+        // Get session to access the seed for decryption
+        const session = await getSession();
+        if (!session || !session.loggedIn) {
+            throw new Error('User must be logged in to decode NFTs.');
+        }
+
         // Get all NFTs
         const nfts = await getAllNFTs(null, serverUrl);
 
@@ -469,7 +477,7 @@ export async function getAllNFTsAndDecode(serverUrl = 'wss://s.altnet.rippletest
                 let hexValue = null;
 
                 try {
-                    // Try to decode as reversible encoding
+                    // Try to decrypt as encrypted password
                     if (uri) {
                         // Convert XRPL URI to hex string format
                         let hexString = convertXRPLUriToHex(uri);
@@ -484,14 +492,22 @@ export async function getAllNFTsAndDecode(serverUrl = 'wss://s.altnet.rippletest
                             throw new Error('Invalid hex string format');
                         }
 
-                        // Add 0x prefix for decoding
+                        // Add 0x prefix for decryption
                         hexValue = '0x' + hexString;
-                        decodedPassword = decodeStringReversible(hexValue);
+
+                        // Try to decrypt using the wallet seed
+                        decodedPassword = await decryptPassword(hexValue, session.seed);
                     }
                 } catch (error) {
-                    // If reversible decoding fails, it might be a hash or invalid format
-                    decodedPassword = null;
-                    console.warn('Failed to decode NFT URI:', error.message, 'URI:', uri, 'Hex:', hexValue);
+                    // If decryption fails, try reversible encoding as fallback (for backwards compatibility)
+                    try {
+                        if (uri && hexValue) {
+                            decodedPassword = decodeStringReversible(hexValue);
+                        }
+                    } catch (fallbackError) {
+                        decodedPassword = null;
+                        console.warn('Failed to decrypt/decode NFT URI:', error.message, 'URI:', uri);
+                    }
                 }
 
                 // If we have a hash, note that we can't decode it directly
@@ -504,7 +520,7 @@ export async function getAllNFTsAndDecode(serverUrl = 'wss://s.altnet.rippletest
                 return {
                     ...nft,
                     uriHex: typeof uri === 'string' ? uri : hexValue?.slice(2) || '',
-                    decodedPassword: decodedPassword, // Will be null if it's a hash
+                    decodedPassword: decodedPassword, // Will be null if decryption fails
                     isReversible: decodedPassword !== null,
                     isValidHash: isValidHash || false,
                     hexValue: hexValue,
@@ -530,7 +546,7 @@ export async function getAllNFTsAndDecode(serverUrl = 'wss://s.altnet.rippletest
  * @example
  * const isValid = await verifyPasswordFromNFT('00080000...', 'myPassword');
  */
-export async function verifyPasswordFromNFT(nftTokenID, candidatePassword, serverUrl = 'wss://s.altnet.rippletest.net:51233') {
+export async function verifyPasswordFromNFT(nftTokenID, candidatePassword, serverUrl = 'wss://s.devnet.rippletest.net:51233') {
     if (!nftTokenID || typeof nftTokenID !== 'string') {
         throw new Error('NFT Token ID must be a non-empty string');
     }

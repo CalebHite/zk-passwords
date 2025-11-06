@@ -373,14 +373,12 @@ const Popup = () => {
                           <div className="nft-id">
                             NFT ID: {formatAddress(nft.NFTokenID)}
                           </div>
-                          {nft.decodedPassword && (
-                            <button
-                              onClick={() => copyToClipboard(nft.decodedPassword)}
-                              className="btn-copy-small"
-                            >
-                              Copy Password
-                            </button>
-                          )}
+                          <button
+                            onClick={() => copyToClipboard(nft.NFTokenID)}
+                            className="btn-copy-small"
+                          >
+                            Copy NFT ID
+                          </button>
                         </div>
                       </div>
                     ))}
